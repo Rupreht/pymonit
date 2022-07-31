@@ -80,5 +80,5 @@ def main() -> None:
     for host in hosts:
         print(host, get_system_info(host)['minertype'])
 
-if __name__ == '__name__':
+if __name__ == '__main__':
     main()
