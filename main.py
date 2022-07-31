@@ -69,7 +69,7 @@ def get_system_info(ip: str) -> dict:
                          timeout=5)
         try:
             json_object = json.loads(request.text)
-        except TypeError:
+        except json.decoder.JSONDecodeError:
             json_object = json.loads('{"minertype": "n/a"}')
     except requests.exceptions.RequestException:
         print("Error: connect error")
