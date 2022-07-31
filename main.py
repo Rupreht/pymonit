@@ -2,8 +2,13 @@
 """ for exec on NanoPy """
 import os
 import json
+import aiohttp
+import asyncio
+import time
 import requests
 from requests.auth import HTTPDigestAuth
+
+start_time = time.time()
 
 # url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
@@ -58,15 +63,15 @@ hosts = [
     '192.168.105.138',
 ]
 
-def get_system_info(ip: str) -> dict:
+async def get_system_info(ip: str) -> dict:
     """ Get System Info """
     url = f"http://{ip}/cgi-bin/get_system_info.cgi"
     try:
         request = requests.get(url,
-                         auth=HTTPDigestAuth(
-                             os.getenv('ASIC_USERNAME'),
-                             os.getenv('ASIC_PASSWD')),
-                         timeout=5)
+                        auth=HTTPDigestAuth(
+                            os.getenv('ASIC_USERNAME'),
+                            os.getenv('ASIC_PASSWD')),
+                        timeout=5)
         try:
             json_object = json.loads(request.text)
         except json.decoder.JSONDecodeError:
@@ -75,10 +80,13 @@ def get_system_info(ip: str) -> dict:
         json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
     return json_object
 
-def main() -> None:
+async def main() -> None:
     """ Main """
-    for host in hosts:
-        print(host, get_system_info(host)['minertype'])
+    tasks = [asyncio.ensure_future(
+        print(host, get_system_info(host)['minertype'])) for host in hosts]
+    await asyncio.wait(tasks)
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
+
+print(f"--- {time.time() - start_time} seconds ---")
