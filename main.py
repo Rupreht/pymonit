@@ -72,7 +72,7 @@ def get_system_info(ip: str) -> dict:
         except json.decoder.JSONDecodeError:
             json_object = json.loads('{"minertype": "n/a"}')
     except requests.exceptions.RequestException:
-        print("Error: connect error")
+        json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
     return json_object
 
 def main() -> None:
