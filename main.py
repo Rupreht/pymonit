@@ -2,11 +2,11 @@
 """ for exec on NanoPy """
 import os
 import json
-import aiohttp
-import asyncio
 import time
 import requests
 from requests.auth import HTTPDigestAuth
+import asyncio
+import aiohttp
 
 start_time = time.time()
 
@@ -63,11 +63,11 @@ hosts = [
     '192.168.105.138',
 ]
 
-async def get_system_info(ip: str) -> dict:
+async def get_system_info(session: aiohttp.ClientSession, hostname: str) -> dict:
     """ Get System Info """
-    url = f"http://{ip}/cgi-bin/get_system_info.cgi"
+    url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
     try:
-        request = requests.get(url,
+        request = await session.get(url,
                         auth=HTTPDigestAuth(
                             os.getenv('ASIC_USERNAME'),
                             os.getenv('ASIC_PASSWD')),
@@ -82,9 +82,13 @@ async def get_system_info(ip: str) -> dict:
 
 async def main() -> None:
     """ Main """
-    tasks = [asyncio.ensure_future(
-        print(host, get_system_info(host)['minertype'])) for host in hosts]
-    await asyncio.wait(tasks)
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+
+        tasks = [asyncio.create_task(
+            get_system_info(session, host)) for host in hosts]
+
+        await asyncio.gather(*tasks)
 
 if __name__ == '__main__':
     asyncio.run(main())
