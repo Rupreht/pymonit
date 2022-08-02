@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
-import threading
+from threading import Thread, BoundedSemaphore
 import os
 import json
 import time
@@ -81,17 +81,17 @@ def get_system_info(hostname: str) -> dict:
 
 def get_minertype(hostname: str) -> str:
     """ Get Miner Type """
-    minertype = get_system_info(hostname)['minertype']
-    print(hostname, minertype)
-    return minertype
+    with pool:
+        minertype = get_system_info(hostname)['minertype']
+        print(hostname, minertype)
+        return minertype
 
 def main() -> None:
     """ Main """
     thr_list = []
 
     for host in hosts:
-        # print(host, get_minertype(host))
-        thr = threading.Thread(target=get_minertype, args=(host,))
+        thr = Thread(target=get_minertype, args=(host,))
         thr_list.append(thr)
         thr.start()
 
@@ -99,6 +99,6 @@ def main() -> None:
         i.join()
 
 if __name__ == '__main__':
+    pool = BoundedSemaphore(value=25)
     main()
     print(f"--- {time.time() - start_time} seconds ---")
-
