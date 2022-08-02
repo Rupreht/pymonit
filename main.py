@@ -3,10 +3,10 @@
 import os
 import json
 import time
-import requests
-from requests.auth import HTTPDigestAuth
+# import requests
 import asyncio
 import aiohttp
+from requests.auth import HTTPDigestAuth
 
 start_time = time.time()
 
@@ -67,22 +67,19 @@ async def get_system_info(session: aiohttp.ClientSession, hostname: str) -> dict
     """ Get System Info """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
     try:
-        request = await session.get(url,
-                        auth=HTTPDigestAuth(
-                            os.getenv('ASIC_USERNAME'),
-                            os.getenv('ASIC_PASSWD')),
-                        timeout=5)
+        request = await session.get(url=url)
         try:
             json_object = json.loads(request.text)
         except json.decoder.JSONDecodeError:
             json_object = json.loads('{"minertype": "n/a"}')
-    except requests.exceptions.RequestException:
+    except aiohttp.ClientConnectorError:
         json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
     return json_object
 
 async def main() -> None:
     """ Main """
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(auth=HTTPDigestAuth(
+        os.getenv('ASIC_USERNAME'), os.getenv('ASIC_PASSWD'))) as session:
         tasks = []
 
         tasks = [asyncio.create_task(
