@@ -87,10 +87,18 @@ def get_minertype(hostname: str) -> str:
 
 def main() -> None:
     """ Main """
+    thr_list = []
+
     for host in hosts:
-        # print(host, get_system_info(host)['minertype'])
-        threading.Thread(target=get_minertype, args=(host)).start()
+        # print(host, get_minertype(host))
+        thr = threading.Thread(target=get_minertype, args=(host,))
+        thr_list.append(thr)
+        thr.start()
+
+    for i in thr_list:
+        i.join()
 
 if __name__ == '__main__':
     main()
     print(f"--- {time.time() - start_time} seconds ---")
+
