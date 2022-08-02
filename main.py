@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
+import threading
 import os
 import json
+import time
 import requests
 from requests.auth import HTTPDigestAuth
+
+start_time = time.time()
 
 # url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
@@ -58,9 +62,9 @@ hosts = [
     '192.168.105.138',
 ]
 
-def get_system_info(ip: str) -> dict:
+def get_system_info(hostname: str) -> dict:
     """ Get System Info """
-    url = f"http://{ip}/cgi-bin/get_system_info.cgi"
+    url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
     try:
         request = requests.get(url,
                          auth=HTTPDigestAuth(
@@ -75,10 +79,18 @@ def get_system_info(ip: str) -> dict:
         json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
     return json_object
 
+def get_minertype(hostname: str) -> str:
+    """ Get Miner Type """
+    minertype = get_system_info(hostname)['minertype']
+    print(hostname, minertype)
+    return minertype
+
 def main() -> None:
     """ Main """
     for host in hosts:
-        print(host, get_system_info(host)['minertype'])
+        # print(host, get_system_info(host)['minertype'])
+        threading.Thread(target=get_minertype, args=(host)).start()
 
 if __name__ == '__main__':
     main()
+    print(f"--- {time.time() - start_time} seconds ---")
