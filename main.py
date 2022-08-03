@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
-from threading import Thread, BoundedSemaphore, Lock
+from threading import Thread, BoundedSemaphore, RLock
 from ipaddress import IPv4Address, summarize_address_range
 import os
 import json
@@ -13,7 +13,7 @@ start_time = time.time()
 #                                   IPv4Address('192.168.106.3'))
 networs = summarize_address_range(IPv4Address('192.168.104.127'),
                                   IPv4Address('192.168.104.255'))
-loker = Lock()
+loker = RLock()
 system_info_list = []
 
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
