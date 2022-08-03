@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
+import Queue
 from threading import Thread, BoundedSemaphore
 from ipaddress import IPv4Address, summarize_address_range
 import os
@@ -12,7 +13,7 @@ start_time = time.time()
 # networs = summarize_address_range(IPv4Address('192.168.100.0'),
 #                                   IPv4Address('192.168.106.3'))
 networs = summarize_address_range(IPv4Address('192.168.104.0'),
-                                  IPv4Address('192.168.105.255'))
+                                  IPv4Address('192.168.104.128'))
 
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
 # url = 'http://192.168.104.154/cgi-bin/minerConfiguration.cgi'
@@ -63,15 +64,13 @@ def discovery_hosts():
     """ Discovery hosts """
     thr_list = []
     for addr in get_addr(networs, new_prefix=30):
-        thr = Thread(target=get_system_info_in_pool, args=(addr,))
+        # thr = Thread(target=get_system_info_in_pool, args=(addr,))
+        thr = Thread(target=lambda q, addr: q.put(get_system_info_in_pool(addr)), args=(que,))
         thr_list.append(thr)
         thr.start()
 
     for i in thr_list:
         i.join()
-
-    for i in thr_list:
-        print(i)
 
     # with open(f"data/discovery_hosts.json",
     #           "w", encoding="utf-8") as file:
@@ -91,6 +90,11 @@ def discovery_hosts():
 
 if __name__ == '__main__':
     pool = BoundedSemaphore(value=25)
+    que = Queue.Queue()
     discovery_hosts()
+    # Check thread's return value
+    while not que.empty():
+        result = que.get()
+        print result
     # main()
     print(f"--- {time.time() - start_time} seconds ---")
