@@ -9,10 +9,10 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 start_time = time.time()
-# networs = summarize_address_range(IPv4Address('192.168.100.0'),
-#                                   IPv4Address('192.168.106.3'))
-networs = summarize_address_range(IPv4Address('192.168.104.127'),
-                                  IPv4Address('192.168.104.255'))
+networs = summarize_address_range(IPv4Address('192.168.100.0'),
+                                  IPv4Address('192.168.106.3'))
+# networs = summarize_address_range(IPv4Address('192.168.104.127'),
+#                                   IPv4Address('192.168.104.255'))
 loker = RLock()
 system_info_list = []
 
@@ -34,7 +34,7 @@ def get_system_info(hostname: str) -> dict:
                              os.getenv('ASIC_PASSWD')),
                          timeout=5)
         try:
-            obj['info'] = request.text.strip()
+            obj['info'] = json.loads(request.text.strip())
         except json.decoder.JSONDecodeError:
             obj['info'] = {"minertype": "n/a"}
     except requests.exceptions.RequestException:
