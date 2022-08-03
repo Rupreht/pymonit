@@ -34,10 +34,10 @@ def get_system_info(hostname: str) -> dict:
                              os.getenv('ASIC_PASSWD')),
                          timeout=5)
         try:
-            obj['info']=request.text.strip()
+            obj['info'] = request.text.strip()
             json_object = json.loads(obj)
         except json.decoder.JSONDecodeError:
-            obj['info']={"minertype": "n/a"}
+            obj['info'] = {"minertype": "n/a"}
             json_object = json.loads(obj)
     except requests.exceptions.RequestException:
         obj['info'] = {"minertype": "n/a", "Error": "connect error"}
