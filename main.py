@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
-import Queue
+import queue
 from threading import Thread, BoundedSemaphore
 from ipaddress import IPv4Address, summarize_address_range
 import os
@@ -90,7 +90,7 @@ def discovery_hosts():
 
 if __name__ == '__main__':
     pool = BoundedSemaphore(value=25)
-    que = Queue.Queue()
+    que = queue.Queue()
     discovery_hosts()
     # Check thread's return value
     while not que.empty():
