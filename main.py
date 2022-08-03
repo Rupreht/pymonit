@@ -26,7 +26,7 @@ system_info_list = []
 def get_system_info(hostname: str) -> dict:
     """ Get System Info """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
-    obj = {'hostname': hostname}
+    obj = {'hostname': str(hostname)}
     try:
         request = requests.get(url,
                          auth=HTTPDigestAuth(
