@@ -111,7 +111,7 @@ def get_status_api_all(sys_info_list: list) -> None:
     for host in sys_info_list:
         if host['info']['minertype'] != "n/a":
             continue
-        print(host['hostname'])
+        print(host['hostname'], host['info']['minertype'])
     return None
 
 
