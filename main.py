@@ -48,7 +48,6 @@ def get_system_info_in_pool(hostname: str) -> str:
     """ Get Miner Type """
     with pool:
         get_system_info(hostname)
-        print(f'hostname: {hostname} is complete')
 
 def get_addr(iterator_nets, new_prefix=30):
     """
