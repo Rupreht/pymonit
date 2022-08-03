@@ -2,17 +2,14 @@
 """ for exec on NanoPy """
 from threading import Thread, BoundedSemaphore, RLock
 from ipaddress import IPv4Address, summarize_address_range
-import os
+import os, sys, getopt
 import json
 import time
 import requests
 from requests.auth import HTTPDigestAuth
 
-start_time = time.time()
 networs = summarize_address_range(IPv4Address('192.168.100.0'),
                                   IPv4Address('192.168.106.3'))
-# networs = summarize_address_range(IPv4Address('192.168.104.127'),
-#                                   IPv4Address('192.168.104.255'))
 loker = RLock()
 system_info_list = []
 status_api_list = []
@@ -23,11 +20,14 @@ status_api_list = []
 # url = 'http://192.168.104.154/cgi-bin/minerStatus.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_status_api.cgi'
 # url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
+# Only "Antminer L7"
+# url = 'http://192.168.103.238/cgi-bin/summary.cgi'
+# url = 'http://192.168.103.238/cgi-bin/stats.cgi'
 
 def get_system_info(hostname: str) -> dict:
     """ Get System Info """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
-    obj = {'hostname': str(hostname)}
+    obj = {}
     try:
         request = requests.get(url,
                          auth=HTTPDigestAuth(
@@ -35,29 +35,35 @@ def get_system_info(hostname: str) -> dict:
                              os.getenv('ASIC_PASSWD')),
                          timeout=5)
         try:
-            obj['info'] = json.loads(request.text.strip())
+            obj = json.loads(request.text.strip())
         except json.decoder.JSONDecodeError:
-            obj['info'] = {"minertype": "n/a"}
+            obj = {"minertype": "n/a"}
     except requests.exceptions.RequestException:
-        obj['info'] = {"minertype": "n/a", "Error": "connect error"}
+        obj = {"minertype": "n/a", "Error": "connect error"}
     loker.acquire()
     system_info_list.append(obj)
     loker.release()
     return obj
 
-def get_status_api(hostname: str) -> dict:
-    """ Get System Info """
-    url = f"http://{hostname}/cgi-bin/get_status_api.cgi"
-    obj = {'hostname': str(hostname)}
+def get_status_api(hostname: str, minertype: str) -> dict:
+    """ Get Miner Status """
+    if minertype == 'Antminer L7':
+        url = f"http://{hostname}/cgi-bin/stats.cgi"
+    else:
+        url =  f"http://{hostname}/cgi-bin/get_status_api.cgi"
+    obj = {'ip': str(hostname)}
     try:
         request = requests.get(url,
                          auth=HTTPDigestAuth(
                              os.getenv('ASIC_USERNAME'),
                              os.getenv('ASIC_PASSWD')),
                          timeout=5)
-        obj['info'] = request.text.strip().split('|')
+        if minertype == 'Antminer L7':
+            obj['status'] = json.loads(request.text.strip())
+        else:
+            obj['status'] = request.text.strip().replace("\n", "").rstrip('|').split('|')
     except requests.exceptions.RequestException:
-        obj['info'] = []
+        obj['status'] = []
     loker.acquire()
     status_api_list.append(obj)
     loker.release()
@@ -68,10 +74,10 @@ def get_system_info_in_pool(hostname: str) -> str:
     with pool:
         get_system_info(hostname)
 
-def get_status_api_in_pool(hostname: str) -> str:
+def get_status_api_in_pool(hostname: str, minertype: str) -> str:
     """ Get Miner Status """
     with pool:
-        get_status_api(hostname)
+        get_status_api(hostname, minertype)
 
 def get_addr(iterator_nets, new_prefix=30):
     """
@@ -101,6 +107,7 @@ def discovery_hosts():
 
     with open("data/discovery_hosts.json", "w", encoding="utf-8") as file:
         json.dump(system_info_list, file, indent=4, ensure_ascii=False)
+        print(f'Save in data/discovery_hosts.json')
 
 def get_status_api_all(sys_info_list: list) -> None:
     """ Get Status API All Hosts """
@@ -108,31 +115,43 @@ def get_status_api_all(sys_info_list: list) -> None:
         with open("data/discovery_hosts.json", "r", encoding="utf-8") as file:
             sys_info_list = json.load(file)
 
+    thr_list = []
     for host in sys_info_list:
-        if "n/a" in host['info']['minertype']:
+        if "n/a" in host['minertype']:
             continue
-        print(host['hostname'], host['info']['minertype'])
-        json_object = json.dumps(get_status_api(host))
-        print(json_object)
+        thr = Thread(target=get_status_api_in_pool, args=(host['ipaddress'], host['minertype'],))
+        thr_list.append(thr)
+        thr.start()
+
+    for i in thr_list:
+        i.join()
+
+    with open("data/status_api.json", "w", encoding="utf-8") as file:
+        json.dump(status_api_list, file, indent=4, ensure_ascii=False)
+        print(f'Save in data/status_api.json')
+
     return None
 
-
-# def main() -> None:
-#     """ Main """
-#     thr_list = []
-
-#     for host in hosts:
-#         thr = Thread(target=get_minertype, args=(host,))
-#         thr_list.append(thr)
-#         thr.start()
-
-#     for i in thr_list:
-#         i.join()
+def main(argv) -> None:
+    """ Main """
+    try:
+        options, arguments = getopt.getopt(argv, "hd",["help", "discovery"])
+    except getopt.GetoptError:
+        print('main.py [-d|--discovery]')
+        sys.exit(2)
+    for opt, arg in options:
+        if opt in ('-h', '--help'):
+            print('Help:\n\tmain.py [-d|--discovery]')
+            sys.exit()
+        if opt in ("-d", "--discovery"):
+            print('Discovery Hosts: begin')
+            discovery_hosts()
+            print('Discovery Hosts: end')
+    get_status_api_all(system_info_list)
 
 if __name__ == '__main__':
-    pool = BoundedSemaphore(value=50)
-    # discovery_hosts()
-    get_status_api_all(system_info_list)
     # Check thread's return value
-    # main()
+    start_time = time.time()
+    pool = BoundedSemaphore(value=50)
+    main(sys.argv[1:])
     print(f"--- {time.time() - start_time} seconds ---")
