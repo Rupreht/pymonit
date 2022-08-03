@@ -45,9 +45,9 @@ def get_system_info(hostname: str) -> dict:
 def get_system_info_in_pool(hostname: str) -> str:
     """ Get Miner Type """
     with pool:
-        with loker:
-            system_info_list.append(get_system_info(hostname))
-            loker.release()
+        loker.acquire()
+        system_info_list.append(get_system_info(hostname))
+        loker.release()
 
 def get_addr(iterator_nets, new_prefix=30):
     """
