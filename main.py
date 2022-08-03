@@ -109,9 +109,11 @@ def get_status_api_all(sys_info_list: list) -> None:
             sys_info_list = json.load(file)
 
     for host in sys_info_list:
-        if host['info']['minertype'] != "n/a":
+        if "n/a" in host['info']['minertype']:
             continue
         print(host['hostname'], host['info']['minertype'])
+        json_object = json.dumps(get_status_api(host))
+        print(json_object)
     return None
 
 
