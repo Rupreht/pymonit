@@ -39,15 +39,15 @@ def get_system_info(hostname: str) -> dict:
             obj['info'] = {"minertype": "n/a"}
     except requests.exceptions.RequestException:
         obj['info'] = {"minertype": "n/a", "Error": "connect error"}
-
+    loker.acquire()
+    system_info_list.append(obj)
+    loker.release()
     return obj
 
 def get_system_info_in_pool(hostname: str) -> str:
     """ Get Miner Type """
     with pool:
-        loker.acquire()
-        system_info_list.append(get_system_info(hostname))
-        loker.release()
+        get_system_info(hostname)
         print(f'hostname: {hostname} is complete')
 
 def get_addr(iterator_nets, new_prefix=30):
