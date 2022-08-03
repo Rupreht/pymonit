@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
 from threading import Thread, BoundedSemaphore
+from ipaddress import IPv4Address, summarize_address_range
 import os
 import json
 import time
@@ -8,59 +9,17 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 start_time = time.time()
+# networs = summarize_address_range(IPv4Address('192.168.100.0'),
+#                                   IPv4Address('192.168.106.3'))
+networs = summarize_address_range(IPv4Address('192.168.104.0'),
+                                  IPv4Address('192.168.105.255'))
 
-# url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
 # url = 'http://192.168.104.154/cgi-bin/minerConfiguration.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_system_info.cgi'
 # url = 'http://192.168.104.154/cgi-bin/minerStatus.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_status_api.cgi'
-
-hosts = [
-    '192.168.104.158',
-    '192.168.104.170',
-    '192.168.104.202',
-    '192.168.104.146',
-    '192.168.103.214',
-    '192.168.104.174',
-    '192.168.104.206',
-    '192.168.104.150',
-    '192.168.105.106',
-    '192.168.104.218',
-    '192.168.104.142',
-    '192.168.104.186',
-    '192.168.103.194',
-    '192.168.105.130',
-    '192.168.104.6',
-    '192.168.104.194',
-    '192.168.105.94',
-    '192.168.105.82',
-    '192.168.105.86',
-    '192.168.103.238',
-    '192.168.104.190',
-    '192.168.103.234',
-    '192.168.105.70',
-    '192.168.104.210',
-    '192.168.103.226',
-    '192.168.103.206',
-    '192.168.104.198',
-    '192.168.103.242',
-    '192.168.105.98',
-    '192.168.104.178',
-    '192.168.103.222',
-    '192.168.104.182',
-    '192.168.103.198',
-    '192.168.104.162',
-    '192.168.105.102',
-    '192.168.103.202',
-    '192.168.104.154',
-    '192.168.105.122',
-    '192.168.103.218',
-    '192.168.105.230',
-    '192.168.104.166',
-    '192.168.105.74',
-    '192.168.105.138',
-]
+# url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
 
 def get_system_info(hostname: str) -> dict:
     """ Get System Info """
@@ -79,26 +38,59 @@ def get_system_info(hostname: str) -> dict:
         json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
     return json_object
 
-def get_minertype(hostname: str) -> str:
+def get_system_info_in_pool(hostname: str) -> str:
     """ Get Miner Type """
     with pool:
-        minertype = get_system_info(hostname)['minertype']
-        print(hostname, minertype)
-        return minertype
+        return get_system_info(hostname)
 
-def main() -> None:
-    """ Main """
+def get_addr(iterator_nets, new_prefix=30):
+    """
+    Get a new address on networks without network and broadcast address
+    Yields:
+        IPv4Address: ip addr
+    """
+
+    for net in iterator_nets:
+        for subnets in net.subnets(new_prefix=new_prefix):
+            for addr in subnets:
+                if addr == subnets.broadcast_address:
+                    continue
+                if addr == subnets.network_address:
+                    continue
+                yield addr
+
+def discovery_hosts():
+    """ Discovery hosts """
     thr_list = []
-
-    for host in hosts:
-        thr = Thread(target=get_minertype, args=(host,))
+    for addr in get_addr(networs, new_prefix=30):
+        thr = Thread(target=get_system_info_in_pool, args=(addr,))
         thr_list.append(thr)
         thr.start()
 
     for i in thr_list:
         i.join()
 
+    for i in thr_list:
+        print(i)
+
+    # with open(f"data/discovery_hosts.json",
+    #           "w", encoding="utf-8") as file:
+    #     json.dump(obj, file, indent=4, ensure_ascii=False)
+
+# def main() -> None:
+#     """ Main """
+#     thr_list = []
+
+#     for host in hosts:
+#         thr = Thread(target=get_minertype, args=(host,))
+#         thr_list.append(thr)
+#         thr.start()
+
+#     for i in thr_list:
+#         i.join()
+
 if __name__ == '__main__':
     pool = BoundedSemaphore(value=25)
-    main()
+    discovery_hosts()
+    # main()
     print(f"--- {time.time() - start_time} seconds ---")
