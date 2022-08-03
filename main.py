@@ -11,9 +11,10 @@ from requests.auth import HTTPDigestAuth
 start_time = time.time()
 # networs = summarize_address_range(IPv4Address('192.168.100.0'),
 #                                   IPv4Address('192.168.106.3'))
-networs = summarize_address_range(IPv4Address('192.168.104.0'),
-                                  IPv4Address('192.168.104.128'))
+networs = summarize_address_range(IPv4Address('192.168.105.0'),
+                                  IPv4Address('192.168.105.128'))
 loker = Lock()
+system_info_list = []
 
 # url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
 # url = 'http://192.168.104.154/cgi-bin/minerConfiguration.cgi'
@@ -25,6 +26,7 @@ loker = Lock()
 def get_system_info(hostname: str) -> dict:
     """ Get System Info """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
+    obj = {'hostname': hostname}
     try:
         request = requests.get(url,
                          auth=HTTPDigestAuth(
@@ -32,21 +34,22 @@ def get_system_info(hostname: str) -> dict:
                              os.getenv('ASIC_PASSWD')),
                          timeout=5)
         try:
-            json_object = json.loads(request.text)
+            obj['info']=request.text.strip()
+            json_object = json.loads(obj)
         except json.decoder.JSONDecodeError:
-            json_object = json.loads('{"minertype": "n/a"}')
+            obj['info']={"minertype": "n/a"}
+            json_object = json.loads(obj)
     except requests.exceptions.RequestException:
-        json_object = json.loads('{"minertype": "n/a", "Error": "connect error"}')
+        obj['info'] = {"minertype": "n/a", "Error": "connect error"}
+        json_object = json.loads(obj)
     return json_object
-
-system_info_list = []
 
 def get_system_info_in_pool(hostname: str) -> str:
     """ Get Miner Type """
     with pool:
-        loker.acquire()
-        system_info_list.append(get_system_info(hostname))
-        loker.release()
+        with loker:
+            system_info_list.append(get_system_info(hostname))
+            loker.release()
 
 def get_addr(iterator_nets, new_prefix=30):
     """
