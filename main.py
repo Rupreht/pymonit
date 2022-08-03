@@ -95,6 +95,6 @@ if __name__ == '__main__':
     # Check thread's return value
     while not que.empty():
         result = que.get()
-        print result
+        print(result)
     # main()
     print(f"--- {time.time() - start_time} seconds ---")
