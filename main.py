@@ -48,6 +48,7 @@ def get_system_info_in_pool(hostname: str) -> str:
         loker.acquire()
         system_info_list.append(get_system_info(hostname))
         loker.release()
+        print(f'hostname: {hostname} is complete')
 
 def get_addr(iterator_nets, new_prefix=30):
     """
