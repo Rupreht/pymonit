@@ -1,4 +1,4 @@
-""" For ASICS API """
+""" For ASICS API AsicSystemInfo """
 from dataclasses import dataclass
 from enum import Enum
 import json
@@ -9,6 +9,7 @@ from urllib.error import URLError
 
 import config
 from exceptions import ApiServiceError
+
 
 Ipaddress: TypeAlias = str
 Macaddr:   TypeAlias = str
@@ -86,5 +87,6 @@ def _parse_asic_macaddr(asics_dict: dict) -> Macaddr:
     return asics_dict["macaddr"]
 
 if __name__ == '__main__':
+    """ Test """
     print(get_system_info('192.168.103.238'))
     print(get_system_info('192.168.104.158'))
