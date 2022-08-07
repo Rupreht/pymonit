@@ -36,22 +36,22 @@ def get_system_info(hostname: str) -> AsicSystemInfo:
     asic = _parse_status_response(status_api_response)
     return asic
 
-# def _get_status_api_response(hostname: str) -> dict:
-#     """ Get Miner Status """
-#     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
-#     try:
-#         return requests.get(url,
-#                                auth=HTTPDigestAuth(
-#                                    config.ASIC_USERNAME,
-#                                    config.ASIC_PASSWD),
-#                                timeout=5)
-#     except RequestException:
-#         raise ApiServiceError
-
 def _get_status_api_response(hostname: str) -> dict:
-    print(f'Get {hostname}')
-    with open("tmp/get_system_info_l7.json", "r", encoding="utf-8") as file:
-        return file.read()
+    """ Get Miner Status """
+    url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
+    try:
+        return requests.get(url,
+                               auth=HTTPDigestAuth(
+                                   config.ASIC_USERNAME,
+                                   config.ASIC_PASSWD),
+                               timeout=5)
+    except RequestException:
+        raise ApiServiceError
+
+# def _get_status_api_response(hostname: str) -> dict:
+#     print(f'Get {hostname}')
+#     with open("tmp/get_system_info_l7.json", "r", encoding="utf-8") as file:
+#         return file.read()
 
 def _parse_status_response(status_api_response: str):
     try:
