@@ -4,11 +4,8 @@ from enum import Enum
 import json
 from json.decoder import JSONDecodeError
 from typing import TypeAlias
-# import requests
 import urllib.request
 from urllib.error import URLError
-# from requests.auth import HTTPDigestAuth
-# from requests.exceptions import RequestException
 
 import config
 from exceptions import ApiServiceError
@@ -41,20 +38,15 @@ def get_system_info(hostname: str) -> AsicSystemInfo:
 def _get_status_api_response(hostname: str) -> dict:
     """ Get Miner Status """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
-    password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    password_mgr.add_password(None, url, config.ASIC_USERNAME,
-                              config.ASIC_PASSWD)
-    auth_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
-    opener = urllib.request.build_opener(auth_handler)
-    urllib.request.install_opener(opener)
     try:
-        # return requests.get(url,
-        #                        auth=HTTPDigestAuth(
-        #                            config.ASIC_USERNAME,
-        #                            config.ASIC_PASSWD),
-        #                        timeout=5)
+        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr.add_password(None, url, config.ASIC_USERNAME,
+                                  config.ASIC_PASSWD)
+        auth_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
+        opener = urllib.request.build_opener(auth_handler)
+        urllib.request.install_opener(opener)
         return urllib.request.urlopen(url).read()
-    except RequestException:
+    except URLError:
         raise ApiServiceError
 
 # def _get_status_api_response(hostname: str) -> dict:
@@ -94,5 +86,5 @@ def _parse_asic_macaddr(asics_dict: dict) -> Macaddr:
     return asics_dict["macaddr"]
 
 if __name__ == '__main__':
-    test = get_system_info('192.168.103.238')
-    print(test)
+    print(get_system_info('192.168.103.238'))
+    print(get_system_info('192.168.104.158'))
