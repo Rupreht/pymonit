@@ -1,58 +1,20 @@
 #!/usr/bin/env python3
 """ for exec on NanoPy """
-from prometheus_client import start_http_server, Counter, Gauge
+import json
 from threading import Thread, BoundedSemaphore, RLock
 from ipaddress import IPv4Address, summarize_address_range
-import os, sys, getopt
-import json
+import getopt
+import sys
 import time
-import requests
-from requests.auth import HTTPDigestAuth
+import config
+
 
 networs = summarize_address_range(IPv4Address('192.168.100.0'),
                                   IPv4Address('192.168.106.3'))
 
-asics_temp_celsius = Gauge(
-    "asics_temp_celsius",
-    "request temp of the host",
-    ['temp', 'index', 'host'])
-asics_miner_hashrate = Gauge(
-    "asics_miner_hashrate",
-    "request miner hashrate of the host",
-    ['hr','host'])
-asics_miner_voltage = Gauge(
-    "asics_miner_voltage",
-    "request miner voltage of the host",
-    ['voltage', 'index', 'host'])
-asics_miner_fan = Gauge(
-    "asics_miner_fan",
-    "request miner fan of the host",
-    ['fan', 'index', 'host'])
-asics_miner_elapsed = Counter(
-    "asics_miner_elapsed",
-    "request miner elapsed of the host",
-    ['elapsed', 'host'])
-
 loker = RLock()
 system_info_list = []
 status_api_list = []
-
-# url = 'http://192.168.104.154/cgi-bin/get_kernel_log.cgi'
-# url = 'http://192.168.104.154/cgi-bin/minerConfiguration.cgi'
-# url = 'http://192.168.104.154/cgi-bin/get_system_info.cgi'
-# url = 'http://192.168.104.154/cgi-bin/minerStatus.cgi'
-# url = 'http://192.168.104.154/cgi-bin/get_status_api.cgi'
-# url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
-# Only "Antminer L7"
-# url = 'http://192.168.103.238/cgi-bin/summary.cgi'
-# url = 'http://192.168.103.238/cgi-bin/stats.cgi'
-
-def open_secrets(env_var: str) -> str:
-    """ Open Secrets file """
-    with open(os.getenv(env_var)) as f:
-        secret_string = [word.strip() for word in f]
-        return ''.join(secret_string)
-
 
 def get_system_info(hostname: str) -> dict:
     """ Get System Info """
@@ -60,10 +22,10 @@ def get_system_info(hostname: str) -> dict:
     obj = {}
     try:
         request = requests.get(url,
-                         auth=HTTPDigestAuth(
-                             open_secrets('ASIC_USERNAME_FILE'),
-                             open_secrets('ASIC_PASSWD_FILE')),
-                         timeout=5)
+                               auth=HTTPDigestAuth(
+                                   config.ASIC_USERNAME,
+                                   config.ASIC_PASSWD),
+                               timeout=5)
         try:
             obj = json.loads(request.text.strip())
         except json.decoder.JSONDecodeError:
@@ -84,10 +46,10 @@ def get_status_api(hostname: str, minertype: str) -> dict:
     obj = {'ip': str(hostname)}
     try:
         request = requests.get(url,
-                         auth=HTTPDigestAuth(
-                             open_secrets('ASIC_USERNAME_FILE'),
-                             open_secrets('ASIC_PASSWD_FILE')),
-                         timeout=5)
+                               auth=HTTPDigestAuth(
+                                   config.ASIC_USERNAME,
+                                   config.ASIC_PASSWD),
+                               timeout=5)
         if minertype == 'Antminer L7':
             obj['status'] = json.loads(request.text.strip())
         else:
