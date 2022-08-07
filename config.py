@@ -5,6 +5,7 @@ Returns:
     ASIC_USERNAME: User Login API
     ASIC_PASSWD: User Passwd API
 """
+SQLITE3_DB_PATH = "local_db.db"
 
 import sys
 from os import getenv
