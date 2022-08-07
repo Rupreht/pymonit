@@ -4,9 +4,11 @@ from enum import Enum
 import json
 from json.decoder import JSONDecodeError
 from typing import TypeAlias
-import requests
-from requests.auth import HTTPDigestAuth
-from requests.exceptions import RequestException
+# import requests
+import urllib.request
+from urllib.error import URLError
+# from requests.auth import HTTPDigestAuth
+# from requests.exceptions import RequestException
 
 import config
 from exceptions import ApiServiceError
@@ -39,12 +41,19 @@ def get_system_info(hostname: str) -> AsicSystemInfo:
 def _get_status_api_response(hostname: str) -> dict:
     """ Get Miner Status """
     url = f"http://{hostname}/cgi-bin/get_system_info.cgi"
+    password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+    password_mgr.add_password(None, url, config.ASIC_USERNAME,
+                              config.ASIC_PASSWD)
+    auth_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
+    opener = urllib.request.build_opener(auth_handler)
+    urllib.request.install_opener(opener)
     try:
-        return requests.get(url,
-                               auth=HTTPDigestAuth(
-                                   config.ASIC_USERNAME,
-                                   config.ASIC_PASSWD),
-                               timeout=5)
+        # return requests.get(url,
+        #                        auth=HTTPDigestAuth(
+        #                            config.ASIC_USERNAME,
+        #                            config.ASIC_PASSWD),
+        #                        timeout=5)
+        return urllib.request.urlopen(url).read()
     except RequestException:
         raise ApiServiceError
 
