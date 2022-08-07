@@ -3,7 +3,7 @@ from json.decoder import JSONDecodeError
 import requests
 from requests.exceptions import RequestException
 from requests.auth import HTTPDigestAuth
-from client_asics import AsicType, Asics
+
 import config
 from exceptions import ApiServiceError
 

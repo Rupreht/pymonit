@@ -1,4 +1,7 @@
+""" Get Status """
+from dataclasses import dataclass
 import json
+from typing import TypeAlias
 import requests
 from requests.auth import HTTPDigestAuth
 import config
@@ -9,6 +12,18 @@ import config
 # url = 'http://192.168.104.154/cgi-bin/minerStatus.cgi'
 # url = 'http://192.168.104.154/cgi-bin/get_status_api.cgi'
 # url = 'http://192.168.104.154/cgi-bin/reboot.cgi'
+
+Celsius: TypeAlias = float
+
+@dataclass(slots=True, frozen=True)
+class AsicStatus:
+    """ Obj AsicStatus """
+    temperature: Celsius
+    hashrate: dict
+    voltage:  int
+    fan:      list
+    elapsed:  int
+
 
 def get_status_api(hostname: str) -> dict:
     """ Get Miner Status """
