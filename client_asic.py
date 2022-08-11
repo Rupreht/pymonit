@@ -23,9 +23,9 @@ class AsicType(str, Enum):
 @dataclass(slots=True, frozen=True)
 class AsicSystemInfo:
     """ Obj Asic """
-    asictype:    AsicType
-    ipaddress:   Ipaddress
-    macaddr:     Macaddr
+    asictype:  AsicType
+    ipaddress: Ipaddress
+    macaddr:   Macaddr
 
 
 def get_system_info(hostname: str) -> AsicSystemInfo:
