@@ -42,4 +42,7 @@ def get_status_api(hostname: str) -> dict:
 
 if __name__ == '__main__':
     """ Test """
+    # normal
     print(get_status_api('192.168.104.154'))
+    # empty
+    print(get_status_api('192.168.104.153'))

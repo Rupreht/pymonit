@@ -26,4 +26,4 @@ def _get_status_api_response(hostname: str) -> dict:
         raise ApiServiceError
 
 if __name__ == '__main__':
-    get_status_api('192.168.103.238')
+    _get_status_api_response('192.168.103.238')
