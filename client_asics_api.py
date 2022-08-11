@@ -39,3 +39,7 @@ def get_status_api(hostname: str) -> dict:
     except requests.exceptions.RequestException:
         obj['status'] = []
     return obj
+
+if __name__ == '__main__':
+    """ Test """
+    print(get_status_api('192.168.104.154'))
